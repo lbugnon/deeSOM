@@ -1,0 +1,1 @@
+from .sompy import SOMFactory
