@@ -92,7 +92,7 @@ class _SOMLayer():
 
         if verbosity:
             print("Layer=%03d \t layer_size=%03d \t n_inputs=%06d \t n_outputs=%06d \t (layer_time=%0.1f min)" %
-                  (h, self.som.mapsize[0], n_in, n_out, (time.time() - starth_time) / 60))
+                  (h, self.som.mapsize[0], n_in, n_out, (time.time() - starth_time) / 60), flush=True)
         self.out_index = idxtrn
 
     def predict(self, test_data):
@@ -143,7 +143,7 @@ class _SOMensembleLayer():
 
             if verbosity:
                 print("ensemble_member=%d_%03d \t layer_size=%03d \t n_inputs=%06d \t n_outputs=%06d \t (layer_time=%0.1f min)" %
-                      (h, h0, som.mapsize[0], trdat.shape[0], n_out0, (time.time() - starth_time) / 60))
+                      (h, h0, som.mapsize[0], trdat.shape[0], n_out0, (time.time() - starth_time) / 60), flush=True)
 
         n_in = len(idxtrn)
         idxtrn = np.array(list(set(idxtrn_new)))
@@ -151,7 +151,7 @@ class _SOMensembleLayer():
 
         if verbosity:
             print("ensemble_layer=%d, n_inputs=%06d, n_outputs=%06d, (htime=%0.1f min)" %
-                  (h, n_in, n_out, (time.time() - starth_time) / 60))
+                  (h, n_in, n_out, (time.time() - starth_time) / 60), flush=True)
 
         self.out_index = idxtrn
 
@@ -236,7 +236,7 @@ class DeeSOM(BaseEstimator):
         n_posh = len(np.where(train_labels == 1)[0])
         h = 0
         if self.verbosity:
-            print("\nStart training: n_samples=%d, n_positives=%d" % (n_data, n_posh))
+            print("\nStart training: n_samples=%d, n_positives=%d" % (n_data, n_posh), flush=True)
         self.data_proba = np.zeros(train_labels.shape)
         while (h < self.max_number_layers) and (n_out >= self.positive_th * n_posh):
             n_in = len(idxtrn)
@@ -264,7 +264,7 @@ class DeeSOM(BaseEstimator):
 
         self.elastic_factor = 1
         if self.verbosity:
-            print("(Total time=%0.1f min)" % ((time.time() - start_time) / 60))
+            print("(Total time=%0.1f min)" % ((time.time() - start_time) / 60), flush=True)
         return
 
 
