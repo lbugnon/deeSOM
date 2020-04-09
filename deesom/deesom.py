@@ -7,7 +7,7 @@ import numpy as np
 from sompy import SOMFactory
 import time
 from sklearn.base import BaseEstimator
-
+import pickle
 
 class _SOM():
     def __init__(self, train_data, train_labels, n_jobs, train_len, max_train_len, max_map_size, nsize, elastic_factor,
@@ -28,12 +28,12 @@ class _SOM():
                               elastic_factor)))
             mapsize = [n, n]
         self.mapsize = mapsize
-        self.som = SOMFactory.build(train_data, mapsize, normalization=None)
-        self.som.train(n_job=n_jobs, train_len_factor=train_len, verbose=None, maxtrainlen=max_train_len)
-        self.som_labels = self.set_neighbour(mapsize[0], train_data, train_labels)
+        som = SOMFactory.build(train_data, mapsize, normalization=None)
+        som.train(n_job=n_jobs, train_len_factor=train_len, verbose=None, maxtrainlen=max_train_len)
+        self.som_labels = self.set_neighbour(som, mapsize[0], train_data, train_labels)
+        self.codebook = som.codebook
 
-
-    def set_neighbour(self, n, data, labels):
+    def set_neighbour(self, som, n, data, labels):
         """
         Extend the positive units labels to a neighbourhood (positive region).
         :param som: sompy.SOM model
@@ -46,7 +46,7 @@ class _SOM():
 
         idx_mi = np.where(labels == 1)[0]
         # Find best matching units for positives
-        bmus1 = self.som.find_bmu(data[idx_mi], self.n_jobs).astype(int)[0]
+        bmus1 = som.find_bmu(data[idx_mi], self.n_jobs).astype(int)[0]
 
         som_labels = np.zeros((n * n,), dtype=np.bool)
         som_labels[bmus1] = 1
@@ -58,7 +58,7 @@ class _SOM():
         # gaussian distance
         visualization_neighbour **= 2
         if visualization_neighbour > 0:
-            dist_matrix = self.som._distance_matrix
+            dist_matrix = som._distance_matrix
             pos_units = np.where(som_labels == 1)[0]
             for l in pos_units:
                 som_labels[dist_matrix[l, :] <= visualization_neighbour] = 1
@@ -71,7 +71,9 @@ class _SOM():
         :param data: data to label
         :return: new labels for data
         """
-        bmus = self.som.find_bmu(data, 4)
+        som = SOMFactory.build(np.zeros((1,1)), self.codebook.mapsize, normalization=None)
+        som.codebook = self.codebook
+        bmus = som.find_bmu(data, 4)
         labels = self.som_labels[bmus[0].astype(int)]
         return labels
 
@@ -98,7 +100,7 @@ class _SOMLayer():
     def predict(self, test_data):
         return self.som.predict(test_data)
 
-class _SOMensembleLayer():
+class _SOMEnsembleLayer():
     def __init__(self, train_data, train_labels, idxtrn, n_jobs, train_len, max_train_len, max_map_size, nsize,
                    elastic_factor, target_imbalance, visualization_neighbour, verbosity, h=0):
         """
@@ -214,11 +216,20 @@ class DeeSOM(BaseEstimator):
         self.elastic = True
         self.verbosity = verbosity
 
-        # Initial state: TODO check if this is ok with the good practices
         self.elastic_factor = 1
         self.layers = []
-        self.layers_labels = []
+        
 
+    def save_model(self, fname):
+        config = [self.max_map_size, self.visualization_neighbour, self.train_len_factor, self.max_train_len, self.map_size_factor, self.max_number_layers,
+                  self.elastic_threshold, self.positive_th, self.target_imbalance]
+        pickle.dump([self.layers, config], open(fname, "wb"))
+
+    def load_model(self, fname):
+        self.layers, config = pickle.load(open(fname, "rb"))
+        self.max_map_size, self.visualization_neighbour, self.train_len_factor, self.max_train_len, \
+        self.map_size_factor, self.max_number_layers, self.elastic_threshold, self.positive_th, \
+        self.target_imbalance = config
 
 
     def fit(self, train_data, train_labels):
@@ -245,7 +256,7 @@ class DeeSOM(BaseEstimator):
 
             # imbalance-driven ensemble layer
             if self.target_imbalance > 0 and n_neg / n_pos >= 2 * self.target_imbalance:
-                layer = _SOMensembleLayer(train_data, train_labels, idxtrn, self.n_jobs, self.train_len_factor,
+                layer = _SOMEnsembleLayer(train_data, train_labels, idxtrn, self.n_jobs, self.train_len_factor,
                                                  self.max_train_len, self.max_map_size, self.map_size_factor, self.elastic_factor,
                                                  self.target_imbalance, self.visualization_neighbour, self.verbosity, h)
             else:
