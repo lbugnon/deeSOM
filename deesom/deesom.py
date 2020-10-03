@@ -287,29 +287,23 @@ class DeeSOM(BaseEstimator):
         if test_data is None:
             return self.data_proba/np.max(self.data_proba)
 
-        # TODO when test_data is not none
+        n_data = test_data.shape[0]
+        idxtst = np.array(range(n_data))
+        scores = np.zeros(n_data, dtype=np.int)
+        h = 0
+        while h < len(self.layers) and len(idxtst) > 0:
+            resh = self.layers[h].predict(test_data[idxtst, :])
+
+            idxtst = idxtst[np.where(resh == 1)[0]]
+            scores[idxtst] += 1
+            # slab[i]==n means sample i was discarded in layer n (thus it was considered as positive up to layer n-1)
+            h += 1
+        return scores/np.max(scores)
+
 
     def get_deesom_height(self, n_out, n_in):
         """ Calculate next SOM layer height using the elastic algorithm"""
         if self.elastic and n_out > self.elastic_threshold * n_in:
             self.elastic_factor *= 1.2
 
-    def predict(self, test_data):
-        """
-        Implement deepsom testing per level.
-
-        """
-        n_data = test_data.shape[0]
-        idxtst = np.array(range(n_data))
-        slabsh = np.zeros(n_data, dtype=np.int)
-        h = 0
-        while h < len(self.layers) and len(idxtst) > 0:
-
-            resh = self.layers[h].predict(test_data[idxtst, :])
-
-            idxtst = idxtst[np.where(resh == 1)[0]]
-            slabsh[idxtst] += 1
-            # slab[i]==n means sample i was discarded in layer n (thus it was considered as positive up to layer n-1)
-            h += 1
-        return slabsh
 

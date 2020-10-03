@@ -2,8 +2,6 @@ DeeSOM
 --------------------------------------------------------------------------------
 Self-organized map based classifier, developed to deal with large and highly imbalanced data.
 
-sinc(i) - http://sinc.unl.edu.ar
-
 The methods automatically build several layers of SOM. Data is clustered and samples that
 are not likely to be positive class member are discarded at each level.  
 
@@ -21,9 +19,19 @@ GPL. Please feel free to contact with any issue, comment or suggestion.
 This code was used in:
 
 "Deep neural architectures for highly imbalanced data in bioinformatics"
-L. A. Bugnon, C. Yones, D. H. Milone and G. Stegmayer*, IEEE Transactions on Neural Networks and Learning Systems,
+L. A. Bugnon, C. Yones, D. H. Milone and G. Stegmayer, IEEE Transactions on Neural Networks and Learning Systems,
  Special Issue on Recent Advances in Theory, Methodology and Applications of Imbalanced Learning (in press).
+
+sinc(i) - http://sinc.unl.edu.ar
+
 
 ## Instalation
 
-## Running the demo.
+just do:
+```bash
+python -m pip install --user -U deeSOM
+```
+
+## Running the demo
+
+You'll find a Jupyter notebook with a small tutorial to train a deeSOM model and use it for predictions.
